@@ -13,14 +13,12 @@
 
 volatile uint8_t rtc_triggered = 0;
 
-/* ================= INTERRUPT ================= */
 
 ISR(INT0_vect)
 {
 	rtc_triggered = 1;
 }
 
-/* ================= SLEEP ================= */
 
 static void MCU_Sleep(void)
 {
@@ -31,7 +29,6 @@ static void MCU_Sleep(void)
 	sleep_disable();
 }
 
-/* ================= MAIN ================= */
 
 int main(void)
 {
@@ -50,13 +47,13 @@ int main(void)
 
 	RTC_Init();
 
-	/*  RUN THIS ONLY ONCE – THEN COMMENT IT */
+	
 	// Time: 18:09:00
 	// Date: 07-02-2026 (Saturday = 7)
 	RTC_SetTimeDate(0, 29, 22, 4, 11, 2, 26);  
 
 	/* Alarm Time */
-	RTC_SetAlarm_Time(22,30, 0);  // When Alarm is required change time 
+	RTC_SetAlarm_Time(22,30, 0);  //  change time When Alaaarm is required
 
 	while (1)
 	{
@@ -81,6 +78,7 @@ int main(void)
 	}
 }
 /* 
+CONNECTION --------------------------------------
 GOB = GROUND OF BOARD  
 VCCOB=VCC OF BOARD
 RTC CONNECTION 

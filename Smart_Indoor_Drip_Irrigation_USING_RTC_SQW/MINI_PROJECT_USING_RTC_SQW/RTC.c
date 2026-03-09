@@ -1,7 +1,6 @@
 #include "rtc.h"
 #include <avr/io.h>
 
-/* ================= I2C LOW LEVEL ================= */
 
 static void I2C_Init(void)
 {
@@ -28,14 +27,12 @@ static void I2C_Write(uint8_t data)
 	while (!(TWCR & (1 << TWINT)));
 }
 
-/* ================= UTIL ================= */
 
 static uint8_t decToBcd(uint8_t val)
 {
 	return ((val / 10) << 4) | (val % 10);
 }
 
-/* ================= RTC ================= */
 
 void RTC_Init(void)
 {
