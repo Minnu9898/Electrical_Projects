@@ -1,0 +1,80 @@
+
+/*
+ * Using I2C1 - connected to APB1 bus - Enable clock access to APB1 bus
+ * Go to Alternate function table in Datasheet
+ * I2C SCL =PB8 =D15
+ * I2C SDA =PB9 =D14
+ *
+ * Write init function  - comments inside function (I2C.c)
+ * Write a function to read data
+ */
+
+#include <stdio.h>
+#include "stm32f4xx.h"
+#include <stdint.h>
+#include "I2C.h"
+#include "rtc.h"
+#include "uart.h"
+
+#define GPIOAEN		(1U<<0)
+#define RTC_ADDR  	0x68
+#define LED_PIN		5
+#define RELAY_PIN   6
+
+uint8_t sec, min, hour;
+
+int main(void)
+{
+		/*FOR LED */
+
+		RCC->AHB1ENR |= GPIOAEN;	// Enable GPIOA clock
+	    //Set PA5 as output
+	    GPIOA->MODER &= ~(3U << (LED_PIN*2)); // Clear mode bits
+	    GPIOA->MODER |=  (1U << (LED_PIN*2)); // Set as output
+	    GPIOA->OTYPER &= ~(1U << LED_PIN);  // Output type = push-pull
+	    GPIOA->PUPDR &= ~(3U << (LED_PIN*2));// No pull-up, no pull-down
+
+
+	    /* Set PA6 as output FOR RELAY MODULE*/
+	    GPIOA->MODER &= ~(3U << (2*RELAY_PIN)); // Clear mode
+	    GPIOA->MODER |=  (1U << (2*RELAY_PIN)); // Output mode
+	    GPIOA->OTYPER &= ~(1U << RELAY_PIN);   // Push-pull
+	    GPIOA->PUPDR &= ~(3U << (2*RELAY_PIN));  // No pull-up/pull-down
+
+	    I2C_init();
+	    UART2_tx_init();
+
+	    RTC_SET_TIME(17,0,0);
+
+	    while(1)
+	    {
+	    	RTC_GET_TIME(&hour,&min,&sec);
+	    	char msg[50];						//To store formatted time
+	    	sprintf(msg,"%02d:%02d:%02d \r\n", hour, min, sec); //Time Format :sprintf converts to string
+
+	    	for(int i = 0; msg[i] != '\0'; i++) //Now to display the time (as UART sends 1 char at a time, we need loop)
+	    	{
+	    	  uart2_write(msg[i]);
+	    	}
+
+/* LED ON IF TIME =5 PM  */
+
+	    	if(hour == 17 && min == 0)
+	    	{
+	    		GPIOA->ODR |= (1U << LED_PIN); //  LED ON
+	    		GPIOA->ODR |= (1U << RELAY_PIN); //// Pump ON
+	    		/* Will be ON for 1 min */
+	    		 for(volatile int i=0; i<5000000; i++); // ~1 second delay
+	    	}
+	    	else
+	    	{
+	    	   GPIOA->ODR &= ~(1U << LED_PIN);  // LED OFF
+	    	   GPIOA->ODR &= ~(1U << RELAY_PIN);  // Pump OFF
+	    	   for(volatile int i=0; i<5000000; i++); // ~1 second delay
+	    	}
+
+
+	    }
+
+
+}

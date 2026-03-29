@@ -1,0 +1,59 @@
+ALGORITHM
+
+Start
+ ↓
+Initialize I2C & GPIO
+ ↓
+Read Time from RTC
+ ↓
+IF (time == scheduled time)
+    → Turn ON Pump
+ELSE
+    → Turn OFF Pump
+ ↓
+Repeat loop
+
+
+
+Breakdown
+
+STEP 1: 1RTC ↔ STM32 communication
+
+STEP 2: Time comparison logic
+
+STEP 3: Output control (LED + Relay)
+
+
+RTC (DS3231)	STM32 (Example: Blue Pill)
+VCC			3.3V
+GND			GND
+SDA			PB7
+SCL			PB6
+
+
+2. Reading Time from RTC
+
+
+Send RTC address (0x68)
+Read registers:
+Seconds → 0x00
+Minutes → 0x01
+Hours → 0x02
+Convert BCD → Decimal
+
+
+
+LED CONNECTION
+
+LED
+Component	STM32
+LED (+)		PA1
+LED (-)		GND (via resistor)
+
+RELAY CONNECTION
+
+Relay	STM32
+IN	PA0
+VCC	5V
+GND	GND
+

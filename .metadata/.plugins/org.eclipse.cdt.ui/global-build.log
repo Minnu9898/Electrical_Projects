@@ -1,0 +1,14 @@
+15:24:52 **** Incremental Build of configuration Debug for project Smart_Indoor_Irrigation_using_STM32 ****
+make -j16 all 
+arm-none-eabi-size  Smart_Indoor_Irrigation_using_STM32.elf 
+   text	   data	    bss	    dec	    hex	filename
+   5184	     80	   1904	   7168	   1c00	Smart_Indoor_Irrigation_using_STM32.elf
+Finished building: default.size.stdout
+ 
+15:25:06 **** Incremental Build of configuration Debug for project Smart_Indoor_Irrigation_using_STM32 ****
+make -j16 all 
+arm-none-eabi-size  Smart_Indoor_Irrigation_using_STM32.elf 
+   text	   data	    bss	    dec	    hex	filename
+   5184	     80	   1904	   7168	   1c00	Smart_Indoor_Irrigation_using_STM32.elf
+Finished building: default.size.stdout
+ 

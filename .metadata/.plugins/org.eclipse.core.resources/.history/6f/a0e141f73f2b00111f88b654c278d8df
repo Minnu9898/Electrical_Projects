@@ -1,0 +1,355 @@
+#include "stm32f4xx.h"
+#include "I2C.h"
+
+
+#define I2C1EN			(1U<<21)
+#define GPIOBEN			(1U<<1)
+#define CR1_SWRST		(1U<<15)
+
+#define I2C_100KHZ					80      //Decimal number 80
+#define SD_MODE_MAX_RISE_TIME		17		//tools available to compute
+
+#define SR2_BUSY		(1U<<1)
+#define CR1_START		(1U<<8)
+#define SR1_SB			(1U<<0)
+#define SR1_ADDR		(1U<<1)
+#define SR1_TXE			(1U<<7)
+#define CR1_ACK			(1U<<10)
+#define CR1_STOP		(1U<<9)
+#define SR1_RXNE		(1U<<6)
+#define SR1_BTF			(1U<<2)
+
+#define I2C_PE			(1U<<0)
+
+void I2C_init(void)
+{
+	/*Enable clock access to I2C1
+	 *Enable clock to GPIOB
+	 *SET PB8 and PB9 mode to alternate mode
+	 *SET PB8 and PB9 output type to open drain
+	 *Enable pull up to both pins
+	 *
+	 *Enable RESET MODE TO START - Navigate to CR1 register bit =SWRST=1 to reset
+	 *Come out of Reset
+	 *Set clock frequency in Control Register 2 (binary of 16 MHz)
+	 *Set I2C clock speed as standard mode
+	 *Set rise time
+	 *Enable I2C1 FROM CONTROL REGISTER
+	 *
+	 */
+
+	RCC->AHB1ENR |= GPIOBEN;
+
+	GPIOB->MODER &=~(1<<16);
+	GPIOB->MODER |= (1<<17); //PB8
+	GPIOB->MODER &=~(1<<18);
+	GPIOB->MODER |= (1<<19); //PB9
+
+	GPIOB->AFR[1] |= (4 << 0);  // PB8 - AF4 (I2C1_SCL)
+	GPIOB->AFR[1] |= (4 << 4);  // PB9 - AF4 (I2C1_SDA)
+
+	GPIOB->OTYPER |=(1U<<8);
+	GPIOB->OTYPER |=(1U<<9); //OPEN DRAIN
+
+	GPIOB->PUPDR |=(1U<<16);
+	GPIOB->PUPDR &=~(1U<<17);
+	GPIOB->PUPDR |=(1U<<18);
+	GPIOB->PUPDR &=~(1U<<19);
+
+	RCC->APB1ENR |= I2C1EN;
+
+	I2C1->CR1 |=CR1_SWRST; 		// Enter RESET mode
+	I2C1->CR1 &=~(CR1_SWRST);   // come out of  RESET mode
+
+	I2C1->CR2 = 16;   // 16 MHz //Binary of 16MHZ in bits
+
+	I2C1->CCR = I2C_100KHZ; //STD mode =100khz
+	I2C1->TRISE=SD_MODE_MAX_RISE_TIME; //Rise time
+
+	I2C1->CR1|=I2C_PE; //enable I2C1
+
+}
+
+void I2C1_read(uint8_t slave_addr,uint8_t Memory_addr, uint8_t * data) //pointer to store the data
+{
+	/*
+	 * Ensure I2C is not busy - busy flag in Status 2 Reg
+	 * Generate a start condition - CR1 register has start bit
+	 * Once start condition is generated , have to wait till start flagis set - Status Reg1 for start flag SB
+	 * ONCE Start Flag is set we can start transmitting slave addresss and write data
+	 * Wait until the address flag is set (sr1->ADDR at bit 1
+	 * when it is set we need to clear that flag simply by reading SR2 reg
+	 * After this send memory address to data register
+	 * Wait until data register is empty by checking TXE flag in SR1
+	 * if its empty , have to generate a start condition
+	 * Now we have provided the slave address and master address to controller - so there is a connection established btw them
+	 * Now ready to READ
+	 * Transmit slave address + read
+	 * wait till address flag is set
+	 * Once set Disable the Ackn flag in CR1
+	 * Clear address flag by reading SR2
+	 * GENERATE STOP CONDITION
+	 * wait until RXNE flag sets in SR1 when data recieved by master
+	 * Read data from DR reg
+	 *
+	 *
+	 */
+	volatile int tmp;
+	while (I2C1->SR2 & (SR2_BUSY)) {} 		//WAIT UNTIL I2C NOT BUSY
+	I2C1->CR1 |=CR1_START; 					//Generate start condition
+	while (!(I2C1->SR1 & (SR1_SB))) {} 		//WAIT UNTIL START FLAG IS SET
+
+
+	I2C1->DR= (slave_addr <<1); 			//Sent the slave address + write Cz slave need to welcome masters address
+	while (!(I2C1->SR1 &(SR1_ADDR))) {} 	//WAIT UNTIL ADDRESS FLAG IS SET
+	tmp=I2C1->SR2;							// Clear addr flag
+
+
+	I2C1->DR= Memory_addr; 			//Sent the memory  address inside slave to controller to read from that memory
+	while(!(I2C1->SR1 & (SR1_TXE))) {} 		//WAIT UNTIL DATA REGISTER IS EMPTY
+	I2C1->CR1 |=CR1_START; 					//Generate start condition
+	while (!(I2C1->SR1 & (SR1_SB))) {} 		//WAIT UNTIL START FLAG IS SET
+
+	/* Transmit slave address + read */
+	I2C1->DR= (slave_addr <<1)|1;			//Transmit slave address + read to read from slave
+	while (!(I2C1->SR1 &(SR1_ADDR))) {} 	//WAIT UNTIL ADDRESS FLAG IS SET
+	I2C1->CR1 &=~ CR1_ACK;					//Disable Acknowledge flag
+	tmp=I2C1->SR2;							// Clear addr flag by reading SR2
+
+	I2C1->CR1 |=CR1_STOP;					//Generate stop condition after we recieved
+	while(! (I2C1->SR1 &(SR1_RXNE))) {}		//WAIT UNTIL RXNE is set when data recieved in master
+
+	(*data ++)= I2C1->DR;						//Data read from DR is stored  in pointer
+
+}
+
+void I2C1_Burst_read(uint8_t slave_addr,uint8_t Memory_addr, int n, uint8_t * data) //Burst function allows reading multiple bit ; n indicates number of bits
+{
+	volatile int tmp;
+	volatile int timeout = 100000;
+	while (I2C1->SR2 & (SR2_BUSY))
+	{
+		if (--timeout == 0) return;			//WAIT UNTIL I2C NOT BUSY
+	}
+	I2C1->CR1 |=CR1_START; 					//Generate start condition
+	timeout = 100000;
+	while (!(I2C1->SR1 & (SR1_SB)))
+	{
+		 if (--timeout == 0) return;		//WAIT UNTIL START FLAG IS SET
+	}
+
+
+	I2C1->DR= (slave_addr <<1); 			//Sent the slave address + write Cz slave need to welcome masters address
+	 timeout = 100000;
+	while (!(I2C1->SR1 &(SR1_ADDR)))
+	{
+		 if (--timeout == 0) return;		//WAIT UNTIL ADDRESS FLAG IS SET
+	}
+	tmp=I2C1->SR2;
+
+	timeout = 100000;
+	while(!(I2C1->SR1 & (SR1_TXE)))
+	{
+		 if (--timeout == 0) return;		//WAIT UNTIL DATA REGISTER IS EMPTY
+	}
+	I2C1->DR= Memory_addr;					//Sent the memory  address
+	timeout = 100000;
+	while(!(I2C1->SR1 & (SR1_TXE)))
+	{
+		 if (--timeout == 0) return;		//WAIT UNTIL DATA REGISTER IS EMPTY
+	}
+
+	I2C1->CR1 |=CR1_START; 					//Generate start condition
+	 timeout = 100000;
+	while (!(I2C1->SR1 & (SR1_SB)))
+	{
+		 if (--timeout == 0) return;		//WAIT UNTIL START FLAG IS SET
+	}
+
+	I2C1->DR= (slave_addr <<1)|1;			//Transmit slave address + read to read from slave
+	timeout = 100000;
+	while (!(I2C1->SR1 &(SR1_ADDR)))
+	{
+		 if (--timeout == 0) return;		//WAIT UNTIL ADDRESS FLAG IS SET
+	}
+
+	//I2C1->CR1 &=~ CR1_ACK;					//Disable Acknowledge flag
+	//tmp=I2C1->SR2;							// Clear addr flag by reading SR2
+
+	while(n>0U)
+	{
+		/* If one byte */
+		if (n==1U)
+		{
+			I2C1->CR1 &=~ CR1_ACK;					//Disable Acknowledge flag only for last bit
+			tmp=I2C1->SR2;							// Clear addr flag by reading SR2
+
+
+			I2C1->CR1 |=CR1_STOP;					//Generate stop condition
+			 timeout = 100000;
+			for (volatile int i=0;i<1000;i++);
+			while(! (I2C1->SR1 &(SR1_RXNE)))
+			{
+				if (--timeout == 0) return;			//WAIT UNTIL RXNE is set
+			}
+			(*data ++)= I2C1->DR;					//Data read from DR is stored  in pointer
+
+			break;
+		}
+		else
+		{
+
+			tmp=I2C1->SR2;							// Clear addr flag by reading SR2
+			timeout = 100000;
+			while(! (I2C1->SR1 &(SR1_RXNE)))
+			{
+				if (--timeout == 0) return;			//WAIT UNTIL RXNE is set
+			}
+			(*data ++)= I2C1->DR;					//Data read from DR is stored
+			n--;
+		}
+
+	}
+
+
+
+
+
+}
+
+void I2C1_Burst_write(uint8_t slave_addr,uint8_t Memory_addr, int n, uint8_t * data) //Burst function allows reading multiple bit ; n indicates number of bits
+{
+	volatile int tmp;
+		while (I2C1->SR2 & (SR2_BUSY)) {} 		//WAIT UNTIL I2C NOT BUSY
+		I2C1->CR1 |=CR1_START; 					//Generate start condition
+		while (!(I2C1->SR1 & (SR1_SB))) {} 		//WAIT UNTIL START FLAG IS SET
+
+		I2C1->DR= (slave_addr <<1); 			//Transmit slave address plus write
+		while (!(I2C1->SR1 &(SR1_ADDR))) {} 	//WAIT UNTIL ADDRESS FLAG IS SET
+		tmp =I2C1->SR2;							// Clear addr flag by reading SR2
+
+		while(!(I2C1->SR1 & (SR1_TXE))) {} 		//WAIT UNTIL DATA REGISTER IS EMPTY
+		I2C1->DR= Memory_addr;					//Sent the memory  address
+
+		for (int i=0; i<n ; i++)
+		{
+			while(!(I2C1->SR1 & (SR1_TXE))) {} 		//WAIT UNTIL DATA REGISTER IS EMPTY
+
+			I2C1->DR = (*data ++);				//Transmit memory address recieved in burst read funct
+
+		}
+		while(!(I2C1->SR1 & (SR1_BTF))) {} 		//WAIT UNTIL TRANSFER FINISHED =BTF flag set
+		I2C1->CR1 |=CR1_STOP;					//Generate stop condition
+
+
+
+
+}
+/*
+START
+↓
+Enable GPIOB Clock
+↓
+Enable I2C1 Clock
+↓
+Configure PB8 & PB9 as Alternate Function (Find pins from Alternate fuction table )
+↓
+Set Output Type = Open Drain
+↓
+Enable Pull-up Resistors
+↓
+Enter Software Reset (CR1.SWRST = 1)
+↓
+Exit Reset (CR1.SWRST = 0)
+↓
+Set Peripheral Clock Frequency (CR2 = 16 MHz)
+↓
+Configure I2C Speed (Standard Mode - 100kHz)
+↓
+Set Rise Time (TRISE)
+↓
+Enable I2C Peripheral (CR1.PE = 1)
+↓
+END
+ */
+
+
+/*
+ 	 	 	 To READ
+START
+↓
+Wait until BUSY = 0
+↓
+Generate START
+↓
+Wait for SB (Start Bit)
+↓
+Send Slave Address (WRITE)
+↓
+Wait for ADDR flag
+↓
+Read SR2 (Clear ADDR)
+↓
+Send Memory Address
+↓
+Wait for TXE (Data Register Empty)
+↓
+Generate REPEATED START
+↓
+Wait for SB
+↓
+Send Slave Address (READ)
+↓
+Wait for ADDR flag
+↓
+Disable ACK
+↓
+Read SR2 (Clear ADDR)
+↓
+Generate STOP
+↓
+Wait for RXNE (Data Received)
+↓
+Read Data from DR → Store in buffer
+↓
+END
+ */
+
+
+/*
+ * Write Flow
+ *
+ START
+  ↓
+Wait until BUSY = 0
+  ↓
+Generate START condition
+  ↓
+Wait for SB flag
+  ↓
+Send Slave Address (WRITE)
+  ↓
+Wait for ADDR flag
+  ↓
+Read SR2 (Clear ADDR)
+  ↓
+Wait for TXE
+  ↓
+Send Memory Address
+  ↓
+FOR i = 0 to n-1
+    ↓
+  Wait for TXE
+    ↓
+  Send Data Byte (*data++)
+    ↓
+END FOR
+  ↓
+Wait for BTF (Transfer Complete)
+  ↓
+Generate STOP condition
+  ↓
+END
+ */
+
+

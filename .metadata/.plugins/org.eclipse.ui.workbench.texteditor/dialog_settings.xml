@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<section name="Workbench">
+	<item key="hasShownOverlayPopupBefore" value="true"/>
+	<item key="replaceBarOpen" value="true"/>
+	<list key="searchhistory">
+		<item value="char"/>
+		<item value="I2C1-&gt;DR = (Memory_addr &lt;&lt;1);"/>
+	</list>
+	<list key="replacehistory">
+		<item value="uint8_t"/>
+	</list>
+</section>

@@ -1,0 +1,11 @@
+
+
+#ifndef RTC_H_
+#define RTC_H_
+
+#include "I2C.h"
+
+void RTC_SET_TIME(uint8_t sec, uint8_t min, uint8_t hour);
+void RTC_GET_TIME(uint8_t *sec, uint8_t *min, uint8_t *hour);
+
+#endif /* RTC_H_ */

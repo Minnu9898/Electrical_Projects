@@ -1,0 +1,75 @@
+!SESSION 2026-03-25 20:55:55.377 -----------------------------------------------
+eclipse.buildId=Version 1.18.1
+java.version=21.0.3
+java.vendor=Eclipse Adoptium
+BootLoader constants: OS=win32, ARCH=x86_64, WS=win32, NL=en_IN
+Command-line arguments:  -os win32 -ws win32 -arch x86_64
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 4 4 2026-03-25 20:56:29.739
+!MESSAGE CubeMX plugin appears to be active, Log4j initialization might be too late.
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 1 1 2026-03-25 20:56:29.739
+!MESSAGE Log4j2 initialized with config file D:\MINNU\GITHUB\ELECTRONIC_PROJECTS\Smart_Indoor_Irrigation_using_STM32\.metadata\.log4j2.xml
+
+!ENTRY com.st.stm32cube.ide.mcu.ide 1 1 2026-03-25 20:56:33.889
+!MESSAGE Started RMI Server, listening on port 41337
+
+!ENTRY org.eclipse.core.jobs 2 2 2026-03-25 20:56:37.635
+!MESSAGE Job found still running after platform shutdown.  Jobs should be canceled by the plugin that scheduled them during shutdown: org.eclipse.ui.internal.Workbench$39 RUNNING
+	 at java.base/java.util.Collections$UnmodifiableCollection$1.<init>(Collections.java:1075)
+	 at java.base/java.util.Collections$UnmodifiableCollection.iterator(Collections.java:1074)
+	 at org.eclipse.osgi.internal.loader.classpath.ClasspathManager.defineClass(ClasspathManager.java:783)
+	 at org.eclipse.osgi.internal.loader.classpath.ClasspathManager.findClassImpl(ClasspathManager.java:691)
+	 at org.eclipse.osgi.internal.loader.classpath.ClasspathManager.findLocalClassImpl(ClasspathManager.java:657)
+	 at org.eclipse.osgi.internal.loader.classpath.ClasspathManager.findLocalClassImpl(ClasspathManager.java:637)
+	 at org.eclipse.osgi.internal.loader.classpath.ClasspathManager.findLocalClass(ClasspathManager.java:616)
+	 at org.eclipse.osgi.internal.loader.ModuleClassLoader.findLocalClass(ModuleClassLoader.java:348)
+	 at org.eclipse.osgi.internal.loader.BundleLoader.findLocalClass(BundleLoader.java:414)
+	 at org.eclipse.osgi.internal.loader.BundleLoader.findClass0(BundleLoader.java:520)
+	 at org.eclipse.osgi.internal.loader.BundleLoader.findClass(BundleLoader.java:434)
+	 at org.eclipse.osgi.internal.loader.ModuleClassLoader.loadClass(ModuleClassLoader.java:174)
+	 at java.base/java.lang.ClassLoader.loadClass(ClassLoader.java:526)
+	 at org.apache.xerces.impl.XMLDocumentFragmentScannerImpl.reset(Unknown Source)
+	 at org.apache.xerces.impl.XMLDocumentScannerImpl.reset(Unknown Source)
+	 at org.apache.xerces.impl.XMLNSDocumentScannerImpl.reset(Unknown Source)
+	 at org.apache.xerces.impl.xs.opti.SchemaParsingConfig.resetXML10(Unknown Source)
+	 at org.apache.xerces.impl.xs.opti.SchemaParsingConfig.parse(Unknown Source)
+	 at org.apache.xerces.impl.xs.opti.SchemaParsingConfig.parse(Unknown Source)
+	 at org.apache.xerces.impl.xs.opti.SchemaDOMParser.parse(Unknown Source)
+	 at org.apache.xerces.impl.xs.traversers.XSDHandler.getSchemaDocument(Unknown Source)
+	 at org.apache.xerces.impl.xs.traversers.XSDHandler.parseSchema(Unknown Source)
+	 at org.apache.xerces.impl.xs.XMLSchemaLoader.loadSchema(Unknown Source)
+	 at org.apache.xerces.impl.xs.XMLSchemaLoader.loadGrammar(Unknown Source)
+	 at org.apache.xerces.impl.xs.XMLSchemaLoader.loadGrammar(Unknown Source)
+	 at org.apache.xerces.jaxp.validation.XMLSchemaFactory.newSchema(Unknown Source)
+	 at java.xml/javax.xml.validation.SchemaFactory.newSchema(SchemaFactory.java:612)
+	 at com.st.microxplorer.mcu.rtos.api.SupportedApi.loadRequiredInfo(SupportedApi.java:130)
+	 at com.st.microxplorer.mcu.rtos.api.SupportedApi.load(SupportedApi.java:71)
+	 at com.st.microxplorer.mcu.rtos.RtosManager.<init>(RtosManager.java:534)
+	 at com.st.microxplorer.mcu.Mcu.getRtosManager(Mcu.java:7526)
+	 at com.st.microxplorer.mcu.Mcu.propertyChange(Mcu.java:1766)
+	 at java.desktop/java.beans.PropertyChangeSupport.fire(PropertyChangeSupport.java:343)
+	 at java.desktop/java.beans.PropertyChangeSupport.firePropertyChange(PropertyChangeSupport.java:335)
+	 at com.st.microxplorer.util.MXPropertyChangeSupport.refreshing(MXPropertyChangeSupport.java:72)
+	 at com.st.microxplorer.mcu.Mcu.refreshingMcu(Mcu.java:6081)
+	 at com.st.microxplorer.mxsystem.MxSystem.refreshing(MxSystem.java:921)
+	 at com.st.microxplorer.plugins.pinoutconfig.PinoutConfigView.<init>(PinoutConfigView.java:203)
+	 at java.base/jdk.internal.reflect.DirectConstructorHandleAccessor.newInstance(DirectConstructorHandleAccessor.java:62)
+	 at java.base/java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:502)
+	 at java.base/java.lang.reflect.Constructor.newInstance(Constructor.java:486)
+	 at com.st.microxplorer.plugin.PluginManage.loadPluginJar(PluginManage.java:352)
+	 at com.st.microxplorer.plugin.PluginManage.PluginSearch(PluginManage.java:224)
+	 at com.st.microxplorer.plugin.PluginManage.PluginDiscovery(PluginManage.java:67)
+	 at com.st.microxplorer.maingui.MainPanel.initialization(MainPanel.java:329)
+	 at com.st.microxplorer.maingui.AppletMainFrameCubeIde.init(AppletMainFrameCubeIde.java:242)
+	 at com.st.stm32cube.common.mx.core.CubeMxInstance.<init>(CubeMxInstance.java:117)
+	 at com.st.stm32cube.common.mx.core.CubeMxInstance.getInstance(CubeMxInstance.java:91)
+	 at com.st.stm32cube.common.mx.userauth.UserAuthAdapter.<init>(UserAuthAdapter.java:25)
+	 at com.st.stm32cube.common.mx.userauth.UserAuthProvider.getUserAuthAdapter(UserAuthProvider.java:16)
+	 at com.st.stm32cube.common.ecosystemintegration.ui.core.MCUEcoSystemIntegrationUiHelper.getUserAuth(MCUEcoSystemIntegrationUiHelper.java:100)
+	 at com.st.stm32cube.ide.mcu.userauth.UserAuthStartup.earlyStartup(UserAuthStartup.java:32)
+	 at org.eclipse.ui.internal.EarlyStartupRunnable.runEarlyStartup(EarlyStartupRunnable.java:79)
+	 at org.eclipse.ui.internal.EarlyStartupRunnable.run(EarlyStartupRunnable.java:55)
+	 at org.eclipse.core.runtime.SafeRunner.run(SafeRunner.java:47)
+	 at org.eclipse.ui.internal.Workbench$39.run(Workbench.java:2733)
+	 at org.eclipse.core.internal.jobs.Worker.run(Worker.java:63)
